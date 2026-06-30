@@ -1,10 +1,10 @@
 name: Build LOS19(Android12) MSM8974
 on:
-  workflow_dispatch: # 手动触发
+  workflow_dispatch: # 手动触发，手机点按钮就能编译
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:  
+    steps:
       - name: 配置环境依赖 + 本地repo规避权限问题
         run: |
           sudo apt update && sudo apt install -y git python3 python3-pip zip unzip curl libncurses5-dev
@@ -27,17 +27,15 @@ jobs:
 
       - name: 克隆公共设备树 msm8974-common
         run: |
-          mkdir -p los/device/xiaomi
           cd los/device/xiaomi
           git clone https://github.com/rlightz7if/android_device_xiaomi_msm8974-common msm8974-common
 
       - name: 克隆内核
         run: |
-          mkdir -p los/kernel/xiaomi
           cd los/kernel/xiaomi
-          # 小米4 Cancro
+          # 小米4 Cancro 使用这条
           git clone https://github.com/rlightz7if/kernel_xiaomi_cancro cancro
-          # 小米3/Note 取消注释切换内核
+          # 小米3/小米Note标准版注释上面，启用下面安卓11内核链接
           # git clone 安卓11内核地址 cancro
 
       - name: 编译小米4(cancro) LOS
