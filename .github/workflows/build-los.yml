@@ -1,37 +1,47 @@
 name: Build LOS19(Android12) MSM8974
 on:
-  workflow_dispatch: # 手动触发，手机点按钮就能编译
+  workflow_dispatch: # 手动触发
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 配置环境与依赖
+      - name: 配置环境与依赖 + 修复repo写入权限
         run: |
           sudo apt update && sudo apt install -y git python3 python3-pip zip unzip curl repo libncurses5-dev
           git config --global user.name "GithubCI"
           git config --global user.email "ci@github.com"
+          # 核心修复：把repo工具目录归属当前runner用户，允许写入更新
+          sudo chown -R $USER:$USER /usr/bin/repo /usr/local/bin/repo
+          sudo chmod -R u+w /usr/bin/repo /usr/local/bin/repo
+
       - name: 拉取LineageOS源码
         run: |
           mkdir los && cd los
           repo init -u https://github.com/LineageOS/android.git -b lineage-19.1
           repo sync -j$(nproc)
+
       - name: 克隆公共设备树 msm8974-common
         run: |
+          mkdir -p los/device/xiaomi
           cd los/device/xiaomi
           git clone https://github.com/rlightz7if/android_device_xiaomi_msm8974-common msm8974-common
+
       - name: 克隆内核
         run: |
+          mkdir -p los/kernel/xiaomi
           cd los/kernel/xiaomi
-          # 小米4 Cancro 使用这条
+          # 小米4 Cancro
           git clone https://github.com/rlightz7if/kernel_xiaomi_cancro cancro
-          # 小米3/小米Note标准版注释上面，启用下面安卓11内核链接
+          # 小米3/Note 取消注释切换内核
           # git clone 安卓11内核地址 cancro
+
       - name: 编译小米4(cancro) LOS
         run: |
           cd los
           source build/envsetup.sh
           lunch lineage_cancro-userdebug
           make -j$(nproc) bacon
+
       - name: 上传编译成品刷机包
         uses: actions/upload-artifact@v4
         with:
